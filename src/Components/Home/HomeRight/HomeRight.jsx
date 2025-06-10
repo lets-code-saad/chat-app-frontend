@@ -12,9 +12,15 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ListIcon from "@mui/icons-material/List";
-import "./HomeRight.css"
+import "./HomeRight.css";
+import { useNavigate } from "react-router-dom";
+
 const HomeRight = (props) => {
-const {selectedChat} = props
+  const { selectedChat } = props;
+
+  const navigate = useNavigate()
+  
+
   return (
     <Card
       sx={{
@@ -33,10 +39,10 @@ const {selectedChat} = props
           sx={{ width: "200px" }}
           className="img-fluid border-0 rounded-pill"
           component="img"
-          image={selectedChat?.img}
+          image={selectedChat?.profilePhoto}
         />
         <Typography className="text-capitalize">
-          {selectedChat?.name}
+          {selectedChat?.username}
         </Typography>
         <Typography
           sx={{ color: "#555" }}
@@ -47,7 +53,14 @@ const {selectedChat} = props
         </Typography>
       </Box>
       <Divider component="div" color="black" />
-      <Box sx={{ display:"flex", flexDirection:"column", gap:"10px", flexGrow: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+          flexGrow: 1,
+        }}
+      >
         <Typography className="">Media</Typography>
         {/* Media Images */}
         <Box className="d-flex flex-wrap gap-1">
@@ -55,12 +68,21 @@ const {selectedChat} = props
             sx={{ width: "80px" }}
             className="img-fluid"
             component="img"
-            image={selectedChat?.img}
+            image={selectedChat?.profilePhoto}
           />
         </Box>
       </Box>
+
+      {/* LOGOUT BUTTON */}
       <Box className="text-center w-100">
-        <button className="btn btn-primary text-white px-5 border-0 rounded-pill">
+        <button
+          onClick={() => {
+            localStorage.removeItem("token"); // removes the token, and again asks the user to login
+            localStorage.removeItem("isLoggedIn"); // removes the isLoggedIn Condition
+            navigate("/login");
+          }}
+          className="btn btn-primary text-white px-5 border-0 rounded-pill"
+        >
           Logout
         </button>
       </Box>

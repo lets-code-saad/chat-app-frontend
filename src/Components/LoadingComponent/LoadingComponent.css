@@ -1,0 +1,52 @@
+/* src/styles/loader.css */
+
+.loader {
+  position: relative;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+}
+
+.loader-double {
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.7);
+  border-bottom-color: rgba(0, 0, 0, 0.7);
+  animation: spin 1s linear infinite;
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.7));
+}
+
+.loader-double:before,
+.loader-double:after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  bottom: 2px;
+  right: 2px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.7);
+  border-bottom-color: rgba(0, 0, 0, 0.7);
+  opacity: 0.6;
+  animation: spinreverse 1.5s linear infinite;
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.7));
+}
+
+.loader-double:before {
+  top: 5px;
+  left: 5px;
+  bottom: 5px;
+  right: 5px;
+  animation: spinreverse 2s linear infinite;
+}
+
+@keyframes spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes spinreverse {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}

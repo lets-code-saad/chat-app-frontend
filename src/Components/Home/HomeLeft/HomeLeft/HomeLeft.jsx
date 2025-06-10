@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useSyncExternalStore } from "react";
 import {
   Box,
   Button,
@@ -8,13 +8,27 @@ import {
   Typography,
   Avatar,
   Card,
+  Skeleton,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ListIcon from "@mui/icons-material/List";
 import "./HomeLeft.css";
+import { useDispatch, useSelector } from "react-redux";
+import GetOtherUsersThunk from "../../../Store/Redux-Thunks/GetOtherUsersThunk";
 
 const HomeLeft = (props) => {
-  const { chatData,selectedChatId, onSelectChat } = props;
+  const dispatch = useDispatch();
+  const { chatData, selectedChat, receiverId, onSelectChat } = props;
+
+  const { getOtherUsers, getOtherUsersLoading } = useSelector(
+    (state) => state.GetOtherUsersSlice
+  );
+  const { signupUser } = useSelector((state) => state.SignupSlice);
+  useEffect(() => {
+    dispatch(GetOtherUsersThunk());
+  }, [signupUser]);
+console.log(signupUser,"leftSignupUser");
+
   return (
     <Card
       sx={{
@@ -74,32 +88,47 @@ const HomeLeft = (props) => {
         sx={{ overflow: "auto", height: "73vh" }}
         className="d-flex flex-column gap-2 text-black"
       >
-        {chatData?.map((chat) => (
-          <Box
-            // assigning unique id to each chathead
-          key={chat.id}
-            // by clicking selects clicked chat
-            onClick={() => onSelectChat(chat.id)}
-            className={`chat_head ${
-              selectedChatId === chat.id ? `activeChat` : ``
-            } d-flex align-items-center px-1 py-1 gap-2`}
-          >
-            <Avatar src={chat?.img} sx={{ width: 40, height: 40 }} />
-            <Box>
-              <Typography className="text-capitalize" variant="body1">
-                {chat.name}
-              </Typography>
-              {/* recent message */}
-              <Typography
-                sx={{ marginTop: "-20px", color: "#555" }}
-                variant="body2"
-                component="span"
+        {getOtherUsersLoading
+          ? [...Array(getOtherUsers?.otherUsers?.length || 5)].map(
+              (_, index) => (
+                <Box
+                  key={index}
+                  className="d-flex align-items-center px-1 py-1 gap-2"
+                >
+                  <Skeleton variant="circular" width={40} height={40} />
+                  <Box sx={{ width: "100%" }}>
+                    <Skeleton variant="text" width="60%" />
+                    <Skeleton variant="text" width="40%" />
+                  </Box>
+                </Box>
+              )
+            )
+          : getOtherUsers?.otherUsers?.map((chat) => (
+              <Box
+                key={chat._id}
+                onClick={() => onSelectChat(chat._id)}
+                className={`chat_head ${
+                  selectedChat?._id === chat?._id ? `activeChat` : ``
+                } d-flex align-items-center px-1 py-1 gap-2`}
               >
-                {chat.lastMessage}
-              </Typography>
-            </Box>
-          </Box>
-        ))}
+                <Avatar
+                  src={chat?.profilePhoto}
+                  sx={{ width: 40, height: 40 }}
+                />
+                <Box>
+                  <Typography className="text-capitalize" variant="body1">
+                    {chat.username}
+                  </Typography>
+                  <Typography
+                    sx={{ marginTop: "-20px", color: "#555" }}
+                    variant="body2"
+                    component="span"
+                  >
+                    {chat.lastMessage}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
       </Box>
     </Card>
   );
