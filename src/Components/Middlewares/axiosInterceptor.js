@@ -2,7 +2,8 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 const axiosInterceptor = axios.create({
-  baseURL: "http://localhost:8000",
+  // baseURL: "http://localhost:8000", local host
+  baseURL: "https://chirpchat-backend.vercel.app", // live
 });
 
 axiosInterceptor.interceptors.request.use(
