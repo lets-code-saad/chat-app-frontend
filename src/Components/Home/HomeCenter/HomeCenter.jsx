@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Box,
   Button,
@@ -20,17 +20,20 @@ import LoadingComponent from "../../LoadingComponent/LoadingComponent";
 import toast from "react-hot-toast";
 import SendMessageThunk from "../../Store/Redux-Thunks/SendMessageThunk";
 import ReceiveMessageThunk from "../../Store/Redux-Thunks/ReceiveMessageThunk";
-import { setSendMessage } from "../../Store/Redux-Slices/SendMessageSlice";
+import GetProfileThunk from "../../../Components/Store/Redux-Thunks/GetProfileThunk";
+import { Icon } from "@iconify-icon/react/dist/iconify.js";
 
 const HomeCenter = (props) => {
   const dispatch = useDispatch();
-  const { selectedChat, receiverId } = props;
-
+  const { selectedChat, receiverId, isMobile, onSelectBackChat, onSelectChat } = props;
+  
+  const handleBackToChat = () => {
+    onSelectBackChat();
+  };
   const { getProfileUser } = useSelector((state) => state.GetProfileSlice);
   const { sendMessage, sendMessageLoading } = useSelector(
     (state) => state.SendMessageSlice
   );
-
   const { receiveMessage, receiveMessageLoading } = useSelector(
     (state) => state.ReceiveMessageSlice
   );
@@ -38,11 +41,33 @@ const HomeCenter = (props) => {
     (state) => state.GetOtherUsersSlice
   );
 
+  // const bottomRef = useRef(null);
+
+  const myId = getProfileUser?.registeredUser?._id;
+
   useEffect(() => {
-    if (selectedChat?._id) {
-      dispatch(ReceiveMessageThunk(selectedChat._id));
-    }
-  }, [selectedChat?._id, dispatch]);
+    dispatch(GetProfileThunk());
+  }, []);
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (selectedChat._id) {
+        try {
+          await dispatch(ReceiveMessageThunk(selectedChat._id)).unwrap();
+        } catch (error) {
+          toast.error(error.message);
+          // receiveMessage Redux state doesn't get cleared.
+          // Dispatch an action to clear old messages
+          dispatch({ type: "CLEAR_RECEIVE_MESSAGES" });
+        }
+      }
+    };
+    fetchMessages();
+  }, [myId, sendMessage, selectedChat?._id]);
+
+  // useEffect(() => {
+  //   bottomRef?.current?.scrollIntoView({ behavior: "smooth" });
+  // }, [receiveMessage]);
 
   const {
     control,
@@ -61,25 +86,18 @@ const HomeCenter = (props) => {
         SendMessageThunk({ data, receiverId })
       ).unwrap();
 
-      toast.success(response.message);
-      console.log(response, "sendMsg");
-
       reset();
     } catch (error) {
       toast.error(error?.message || "Something Went Wrong");
     }
   };
-  console.log(sendMessage._id, "sendId");
-  console.log(receiveMessage._id, "receiveId");
-  
 
-  // No chat selected state - with "come later" image
   if (!selectedChat?._id) {
     return (
       <Card
         sx={{
           p: 2,
-          height: "100%",
+          height: "100vh",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
@@ -87,11 +105,7 @@ const HomeCenter = (props) => {
         }}
       >
         <Box sx={{ textAlign: "center" }}>
-          <CardMedia
-            className="img-fluid"
-            image="/imgs/no chat selected.jpg"
-            component="img"
-          />
+          <CardMedia sx={{width:"300px",height:"auto"}} image="/imgs/select chat.jpg" component="img" />
           <Typography variant="h6" color="text.secondary">
             Whoops! No Chat Selected <br /> Select any chat to continue
           </Typography>
@@ -104,10 +118,10 @@ const HomeCenter = (props) => {
     <Card
       sx={{
         display: "flex",
-        height: "100%",
-        maxHeight: "100vh",
+        height: "100vh",
+        // maxHeight: "100vh",
         flexDirection: "column",
-        backgroundColor: "#f5f8ff", // Match your original background
+        backgroundColor: "#f5f8ff",
       }}
     >
       {/* Top Header */}
@@ -131,6 +145,21 @@ const HomeCenter = (props) => {
           </Box>
         ) : (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {/* Back Button */}
+            {isMobile && (
+              <Button
+                onClick={handleBackToChat}
+                sx={{ minWidth: "0" }}
+                size="small"
+              >
+                <iconify-icon
+                  icon="ic:sharp-arrow-back"
+                  width="25"
+                  height="25"
+                ></iconify-icon>
+              </Button>
+            )}
+
             <Avatar
               src={selectedChat?.profilePhoto}
               sx={{ width: 40, height: 40 }}
@@ -182,85 +211,44 @@ const HomeCenter = (props) => {
             </Box>
           ))
         ) : receiveMessage?.length > 0 ? (
-          <>
-            {/* Received Messages */}
-            <Box
-              sx={{
-                marginRight: "auto",
-                display: "flex",
-                flexDirection: "column",
-                gap: "5px",
-                mb: 1,
-              }}
-            >
-              {receiveMessage.map((msg) => (
-                <Box
-                  key={msg._id}
+          receiveMessage.map((msg) => {
+            const isMe = msg.senderId === myId;
+            return (
+              <Box
+                key={msg._id}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  backgroundColor: isMe ? "#007AFF" : "#e5e5ea",
+                  color: isMe ? "white" : "black",
+                  px: 2,
+                  py: 1,
+                  borderRadius: 2,
+                  alignSelf: isMe ? "flex-end" : "flex-start",
+                }}
+              >
+                <Avatar
+                  src={
+                    isMe
+                      ? getProfileUser?.registeredUser?.profilePhoto
+                      : selectedChat?.profilePhoto
+                  }
+                  sx={{ width: 30, height: 30 }}
+                />
+                <Typography variant="body2">{msg.message}</Typography>
+                <Typography
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    backgroundColor: "#e5e5ea",
-                    color: "black",
-                    px: 2,
-                    py: 1,
-                    borderRadius: 2,
+                    fontSize: 12,
+                    textAlign: "right",
+                    color: isMe ? "white" : "grey",
                   }}
                 >
-                  <Avatar
-                    src={selectedChat.profilePhoto}
-                    sx={{ width: 30, height: 30, ml: 1 }}
-                  />
-                  <Typography variant="body2">{msg.message}</Typography>
-                  <Typography
-                    sx={{ fontSize: 12, textAlign: "right", color: "gray" }}
-                  >
-                    {msg.time}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-
-            {/* Sent Messages */}
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "5px",
-                mb: 1,
-              }}
-            >
-              {sendMessage?.map((msg) => (
-                <Box
-                  key={msg._id}
-                  sx={{
-                    marginLeft: "auto",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    backgroundColor: "#007AFF",
-                    color: "black",
-                    px: 2,
-                    py: 1,
-                    borderRadius: 2,
-                  }}
-                >
-                  <Avatar
-                    src={msg.profilePhoto}
-                    sx={{ width: 30, height: 30, ml: 1 }}
-                  />
-                  <Typography variant="body2">
-                    {msg.message || "ERR"}
-                  </Typography>
-                  <Typography
-                    sx={{ fontSize: 12, textAlign: "right", color: "gray" }}
-                  >
-                    {msg.time || "12:00"}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-          </>
+                  {new Date(msg.createdAt).toLocaleTimeString() || "12:00"}
+                </Typography>
+              </Box>
+            );
+          })
         ) : (
           <Box
             sx={{
@@ -275,9 +263,10 @@ const HomeCenter = (props) => {
             </Typography>
           </Box>
         )}
+        {/* <Box ref={bottomRef} /> */}
       </Box>
 
-      {/* Input Field at Bottom */}
+      {/* Input Field */}
       <Box
         sx={{
           borderTop: "1px solid #ddd",
@@ -307,13 +296,28 @@ const HomeCenter = (props) => {
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <Button sx={{ minWidth: "0" }} size="small">
+                      <Button
+                        sx={{
+                          minWidth: "0",
+                          "&:hover": {
+                            backgroundColor: "transparent", // Removes hover background
+                          },
+                        }}
+                        disableRipple
+                        size="small"
+                      >
                         <PhotoLibraryIcon sx={{ color: "gray" }} />
                       </Button>
                       <Button
+                        disableRipple
                         disabled={sendMessageLoading}
                         type="submit"
-                        sx={{ minWidth: "0" }}
+                        sx={{
+                          minWidth: "0",
+                          "&:hover": {
+                            backgroundColor: "transparent", // Removes hover background
+                          },
+                        }}
                         size="small"
                       >
                         {sendMessageLoading ? (

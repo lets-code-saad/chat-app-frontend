@@ -11,9 +11,8 @@ const SendMessageThunk = createAsyncThunk(
         data
       );
       // if login succeed
-      console.log(res?.data?.newMessage, "send message from api");
-      return res?.data?.newMessage;
-      
+      console.log(res, "send message from api");
+      return res?.data?.newMessage; // Access newMessage from data
     } catch (error) {
       return rejectWithValue(error?.response?.data?.message);
     }

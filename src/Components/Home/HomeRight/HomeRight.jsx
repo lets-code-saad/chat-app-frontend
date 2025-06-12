@@ -17,16 +17,14 @@ import { useNavigate } from "react-router-dom";
 
 const HomeRight = (props) => {
   const { selectedChat } = props;
-
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   
-
   return (
     <Card
       sx={{
         backgroundColor: "white",
-        height: "100%",
-        maxHeight: "100vh",
+        height: "100vh",
+        // maxHeight: "100vh",
         p: 2,
         display: "flex",
         flexDirection: "column",

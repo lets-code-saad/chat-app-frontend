@@ -1,4 +1,4 @@
-import React, { useEffect, useSyncExternalStore } from "react";
+import React, { useEffect, useState, useSyncExternalStore } from "react";
 import {
   Box,
   Button,
@@ -9,25 +9,46 @@ import {
   Avatar,
   Card,
   Skeleton,
+  Menu,
+  MenuItem,
+  Fade,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ListIcon from "@mui/icons-material/List";
 import "./HomeLeft.css";
 import { useDispatch, useSelector } from "react-redux";
 import GetOtherUsersThunk from "../../../Store/Redux-Thunks/GetOtherUsersThunk";
+import { useNavigate } from "react-router-dom";
 
 const HomeLeft = (props) => {
+  const navigate = useNavigate()
   const dispatch = useDispatch();
-  const { chatData, selectedChat, receiverId, onSelectChat } = props;
+  const {
+    chatData,
+    selectedChat,
+    receiverId,
+    handleClick,
+    handleClose,
+    open,
+    anchorEl,
+    onSelectChat,
+  } = props;
 
   const { getOtherUsers, getOtherUsersLoading } = useSelector(
     (state) => state.GetOtherUsersSlice
   );
+  // search states
+  const [searchTerm, setSearchTerm] = useState("");
+  // handle search
+  const searchFilteredUsers = getOtherUsers?.otherUsers?.filter((query) =>
+    query.username.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const { signupUser } = useSelector((state) => state.SignupSlice);
   useEffect(() => {
     dispatch(GetOtherUsersThunk());
   }, [signupUser]);
-console.log(signupUser,"leftSignupUser");
+  console.log(signupUser, "leftSignupUser");
 
   return (
     <Card
@@ -36,37 +57,91 @@ console.log(signupUser,"leftSignupUser");
         p: 2,
         display: "flex",
         flexDirection: "column",
+        height: "100%",
+        maxHeight: "100vh",
         gap: "20px",
       }}
     >
       {/* Left Logo */}
-      <Box
-        sx={{ height: "40px" }}
-        className="d-flex align-items-center justify-content-between"
-      >
-        <CardMedia
-          className="img-fluid"
-          sx={{ width: "130px" }}
-          component="img"
-          image="/imgs/chat app logo.png"
-        />
-        <Button className="text-black">
+      <Box className="d-flex align-items-center justify-content-between">
+        <Box className="d-flex align-items-center">
+          <CardMedia
+            className="img-fluid"
+            sx={{ width: "45px" }}
+            component="img"
+            image="/imgs/ChatApp Logo.png"
+          />
+          <Typography variant="h6" fontWeight="bold" color="text.secondary">
+            ChirpChat
+          </Typography>
+        </Box>
+        <Button
+          onClick={handleClick}
+          sx={{
+            minWidth: "0",
+            "&:hover": {
+              backgroundColor: "transparent", // Removes hover background
+            },
+          }}
+          disableRipple
+          size="small"
+          className="text-black"
+        >
           <ListIcon />
         </Button>
+        {/* ACCOUNT DASHBOARD MENU */}
+        <Menu
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleClose}
+          anchorOrigin={{
+            vertical: "bottom", // Aligns menu below the anchor
+            horizontal: "right", // Options: "left", "center", "right"
+          }}
+          transformOrigin={{
+            vertical: "top", // Menu grows downward
+            horizontal: "right", // Aligns menu edge with anchor's right
+          }}
+          slotProps={{
+            paper: {
+              sx: {
+                boxShadow: "none",
+                border: "1px solid #e0e0e0",
+                marginLeft: "13px",
+                marginTop: "5px",
+              },
+            },
+          }}
+        >
+          <MenuItem onClick={handleClose}>Profile</MenuItem>
+          <MenuItem onClick={handleClose}>My account</MenuItem>
+          <MenuItem
+            onClick={() => {
+              handleClose();
+              localStorage.removeItem("token"); // removes the token, and again asks the user to login
+              localStorage.removeItem("isLoggedIn"); // removes the isLoggedIn Condition
+              navigate("/login");
+            }}
+          >
+            Logout
+          </MenuItem>
+        </Menu>
       </Box>
       {/* SEARCH BAR */}
       <Box>
         <TextField
+          onChange={(e) => setSearchTerm(e.target.value)}
+          value={searchTerm}
           variant="outlined"
           placeholder="Search anyone.."
           size="small"
           fullWidth
           sx={{
-            backgroundColor: "#002670",
-            color: "white",
+            backgroundColor: "#f0f0f0",
+            color: "grey",
             fontWeight: "light",
             input: {
-              color: "white",
+              color: "black",
             },
             "& .MuiOutlinedInput-root": {
               "& fieldset": {
@@ -77,7 +152,7 @@ console.log(signupUser,"leftSignupUser");
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon sx={{ color: "white" }} />
+                <SearchIcon sx={{ color: "grey" }} />
               </InputAdornment>
             ),
           }}
@@ -88,6 +163,34 @@ console.log(signupUser,"leftSignupUser");
         sx={{ overflow: "auto", height: "73vh" }}
         className="d-flex flex-column gap-2 text-black"
       >
+        {/* Condition 1 : If No Search Results */}
+        {searchFilteredUsers?.length === 0 && (
+          <Card
+            sx={{
+              p: 2,
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Box sx={{ textAlign: "center" }}>
+              <CardMedia
+                image="/imgs/No results found art.jpg"
+                component="img"
+              />
+              <Typography variant="h6" fontWeight="bold" color="text.secondary">
+                No Results Found
+              </Typography>
+              <Typography variant="span" color="text.secondary">
+                No matches for your search. Check spelling or try another name.
+              </Typography>
+            </Box>
+          </Card>
+        )}
+
+        {/* Condition 2 : If Loading */}
         {getOtherUsersLoading
           ? [...Array(getOtherUsers?.otherUsers?.length || 5)].map(
               (_, index) => (
@@ -103,7 +206,8 @@ console.log(signupUser,"leftSignupUser");
                 </Box>
               )
             )
-          : getOtherUsers?.otherUsers?.map((chat) => (
+          : // Condition 3 : If All Users Present
+            searchFilteredUsers?.map((chat) => (
               <Box
                 key={chat._id}
                 onClick={() => onSelectChat(chat._id)}

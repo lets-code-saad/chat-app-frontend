@@ -9,6 +9,8 @@ import {
   Checkbox,
   OutlinedInput,
   CardMedia,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
@@ -19,6 +21,10 @@ import LoadingComponent from "../../LoadingComponent/LoadingComponent";
 import GetProfileThunk from "../../Store/Redux-Thunks/GetProfileThunk";
 
 const SigninPage = () => {
+  // handling responsiveness
+const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"))
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -84,9 +90,10 @@ const SigninPage = () => {
         >
           <Box className="d-flex flex-column align-items-center">
             <CardMedia
-              sx={{ width: "300px" }}
+              sx={{ width: isMobile ?"200px" :"300px" }}
+              className="img-fluid"
               component="img"
-              image="/imgs/logo_big.png"
+              image={"/imgs/logo_big.png"}
             />
           </Box>
           <form onSubmit={handleSubmit(onSubmit)}>

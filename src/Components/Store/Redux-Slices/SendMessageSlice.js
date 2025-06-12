@@ -4,14 +4,11 @@ import SendMessageThunk from "../Redux-Thunks/SendMessageThunk";
 const SendMessageSlice = createSlice({
   name: "SendMessageSlice",
   initialState: {
-    sendMessage: [],
+    sendMessage: null,
     sendMessageLoading: false,
     sendMessageErr: null,
   },
   reducers: {
-    setSendMessage: (state, action) => {
-      state.sendMessage.push(action.payload);
-    },
   },
   extraReducers: (builder) => {
     builder.addCase(SendMessageThunk.pending, (state, action) => {
@@ -21,7 +18,7 @@ const SendMessageSlice = createSlice({
     builder.addCase(SendMessageThunk.fulfilled, (state, action) => {
       state.sendMessageLoading = false;
       state.sendMessageErr = null;
-      state.sendMessage.push(action.payload);
+      state.sendMessage = action?.payload
     });
     builder.addCase(SendMessageThunk.rejected, (state, action) => {
       state.sendMessageLoading = false;
@@ -29,5 +26,4 @@ const SendMessageSlice = createSlice({
     });
   },
 });
-export const { setSendMessage } = SendMessageSlice.actions;
 export default SendMessageSlice.reducer;
